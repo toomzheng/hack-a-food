@@ -1,101 +1,127 @@
-import Image from "next/image";
+"use client"
+
+import { useState } from "react"
+import BarcodeScanner from "@/components/BarcodeScanner"
+import ProductInfo from "@/components/ProductInfo"
+
+interface OpenFoodFactsProduct {
+  product_name: string;
+  brands: string;
+  image_url: string;
+  nutrition_grades: string;
+  nutriments: {
+    'energy-kcal_100g': number;
+    'fat_100g': number;
+    'saturated-fat_100g': number;
+    'carbohydrates_100g': number;
+    'sugars_100g': number;
+    'fiber_100g': number;
+    'proteins_100g': number;
+    'salt_100g': number;
+  };
+  ingredients_text: string;
+  allergens: string;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [isScanning, setIsScanning] = useState(false)
+  const [productData, setProductData] = useState<any>(null)
+  const [error, setError] = useState<string>("")
+  const [loading, setLoading] = useState(false)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const handleBarcodeDetected = async (barcode: string) => {
+    setIsScanning(false)
+    setLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch(
+        `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
+        {
+          headers: {
+            'User-Agent': 'FoodNutritionScanner - Web - Version 1.0'
+          }
+        }
+      )
+      
+      const data = await response.json()
+      
+      if (data.status !== 1) {
+        throw new Error("Product not found")
+      }
+
+      const product = data.product as OpenFoodFactsProduct
+      
+      setProductData({
+        name: product.product_name || 'N/A',
+        brand: product.brands,
+        image_url: product.image_url,
+        nutrition_grade: (product.nutrition_grades || 'N/A').toUpperCase(),
+        nutrients: {
+          energy_kcal: product.nutriments['energy-kcal_100g'],
+          fat: product.nutriments['fat_100g'],
+          saturated_fat: product.nutriments['saturated-fat_100g'],
+          carbohydrates: product.nutriments['carbohydrates_100g'],
+          sugars: product.nutriments['sugars_100g'],
+          fiber: product.nutriments['fiber_100g'],
+          proteins: product.nutriments['proteins_100g'],
+          salt: product.nutriments['salt_100g']
+        },
+        ingredients: product.ingredients_text,
+        allergens: product.allergens
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch product data")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <main className="min-h-screen p-4 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-center mb-8">Food Product Scanner</h1>
+        
+        <div className="mb-8 text-center">
+          <button
+            onClick={() => setIsScanning(!isScanning)}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {isScanning ? "Stop Scanning" : "Start Scanning"}
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        <div className="mb-8">
+          <BarcodeScanner
+            isScanning={isScanning}
+            onBarcodeDetected={handleBarcodeDetected}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+        </div>
+
+        {loading && (
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-8">
+            {error}
+          </div>
+        )}
+
+        {productData && !loading && (
+          <ProductInfo
+            name={productData.name}
+            brand={productData.brand}
+            image_url={productData.image_url}
+            nutrition_grade={productData.nutrition_grade}
+            nutrients={productData.nutrients}
+            ingredients={productData.ingredients}
+            allergens={productData.allergens}
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+        )}
+      </div>
+    </main>
+  )
 }

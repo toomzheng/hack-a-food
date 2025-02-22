@@ -2,20 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@layer utilities {
+  .animate-slideUp {
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out forwards;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  .animate-slideDown {
+    overflow: hidden;
+    animation: slideDown 0.3s ease-in forwards;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes slideUp {
+  from {
+    max-height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    max-height: 0;
+    opacity: 0;
+  }
 }
+
+@keyframes slideDown {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+
