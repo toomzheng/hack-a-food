@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { DashboardSection } from "@/app/components/dashboard-section"
 import { EnvironmentSection } from "@/app/components/environment-section"
@@ -12,7 +12,7 @@ import { ProcessingSection } from "@/app/components/processing-section"
 import { IProduct } from "@/lib/models/Product"
 import { PastScans } from "@/app/components/past-scans"
 
-export default function DashboardPage() {
+function DashboardContent() {
   const searchParams = useSearchParams();
   const [product, setProduct] = useState<IProduct | null>(null);
   const [loading, setLoading] = useState(true);
@@ -157,6 +157,30 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Loading component for Suspense fallback
+function LoadingDashboard() {
+  return (
+    <div className="container mx-auto p-4">
+      <div className="animate-pulse space-y-4">
+        <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-48 bg-gray-200 rounded"></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<LoadingDashboard />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
 

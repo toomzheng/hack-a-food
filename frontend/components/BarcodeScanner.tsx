@@ -73,7 +73,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onProductFound, isScann
   };
 
   useEffect(() => {
+    console.log('Scanner effect triggered, isScanning:', isScanning);
+    
     if (!isScanning) {
+      console.log('Cleaning up scanner');
       if (codeReaderRef.current) {
         codeReaderRef.current.reset();
         codeReaderRef.current = null;
@@ -82,44 +85,67 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onProductFound, isScann
       return;
     }
 
-    codeReaderRef.current = new BrowserMultiFormatReader();
-    let mounted = true;
+    try {
+      console.log('Initializing BrowserMultiFormatReader');
+      codeReaderRef.current = new BrowserMultiFormatReader();
+      let mounted = true;
 
-    const scanBarcode = async () => {
-      if (!webcamRef.current?.video || scanning || !codeReaderRef.current) return;
+      const scanBarcode = async () => {
+        if (!webcamRef.current?.video) {
+          console.log('No video element available');
+          return;
+        }
+        if (scanning) {
+          console.log('Already scanning');
+          return;
+        }
+        if (!codeReaderRef.current) {
+          console.log('No code reader available');
+          return;
+        }
 
-      try {
-        const result = await codeReaderRef.current.decodeFromVideoElement(webcamRef.current.video);
-        if (result && mounted) {
-          setScanning(true);
-          try {
+        try {
+          console.log('Attempting to decode from video');
+          const result = await codeReaderRef.current.decodeFromVideoElement(webcamRef.current.video);
+          if (result && mounted) {
             console.log('Barcode detected:', result.getText());
-            const product = await getProductByBarcode(result.getText());
-            console.log('Product data fetched:', product);
-            await saveToMongoDB(product);
-          } catch (error) {
-            console.error('Error in scan process:', error);
-            setError(error instanceof Error ? error.message : 'Failed to process product');
-            setScanning(false);
+            setScanning(true);
+            try {
+              const product = await getProductByBarcode(result.getText());
+              console.log('Product data fetched:', product);
+              await saveToMongoDB(product);
+            } catch (error) {
+              console.error('Error in scan process:', error);
+              setError(error instanceof Error ? error.message : 'Failed to process product');
+              setScanning(false);
+            }
+          }
+        } catch (error) {
+          // Only log if it's not the usual "no QR code found" error
+          if (error instanceof Error && !error.message.includes('No MultiFormat Readers')) {
+            console.error('Scanning error:', error);
           }
         }
-      } catch (error) {
-        // Ignore errors - they occur when no barcode is detected
-      }
 
-      if (mounted && isScanning && !scanning) {
-        requestAnimationFrame(scanBarcode);
-      }
-    };
+        if (mounted && isScanning && !scanning) {
+          requestAnimationFrame(scanBarcode);
+        }
+      };
 
-    scanBarcode();
+      console.log('Starting scan loop');
+      scanBarcode();
 
-    return () => {
-      mounted = false;
-      if (codeReaderRef.current) {
-        codeReaderRef.current.reset();
-      }
-    };
+      return () => {
+        console.log('Cleanup: unmounting scanner');
+        mounted = false;
+        if (codeReaderRef.current) {
+          codeReaderRef.current.reset();
+        }
+      };
+    } catch (error) {
+      console.error('Error initializing scanner:', error);
+      setError('Failed to initialize scanner');
+    }
   }, [isScanning, onProductFound, scanning, router]);
 
   return (
@@ -137,8 +163,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onProductFound, isScann
               height: 480,
             }}
             onUserMediaError={(error) => {
-              console.error('Camera error:', error);
-              setError('Camera access denied');
+              console.error('Camera access error:', error);
+              setError('Camera access denied. Please ensure you have granted camera permissions.');
             }}
           />
           <div className="absolute inset-0 border-2 border-blue-500 rounded-lg pointer-events-none" />
