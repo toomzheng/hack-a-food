@@ -1,4 +1,4 @@
-import { ProductData } from '@/lib/types';
+import { ProductData } from '../types';
 
 const OFF_API_URL = 'https://world.openfoodfacts.org/api/v0/product/';
 
@@ -33,8 +33,5 @@ export async function getProductByBarcode(barcode: string): Promise<ProductData>
     nova_group: data.product.nova_group,
     nutriscore_grade: data.product.nutriscore_grade,
     image_url: data.product.image_url,
-    additives_tags: data.product.additives_tags || [],
-    additives_n: data.product.additives_n || 0,
-    additives_old_tags: data.product.additives_old_tags || [],
   };
 } 

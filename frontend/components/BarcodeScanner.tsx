@@ -2,8 +2,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Webcam from 'react-webcam';
 import { BrowserMultiFormatReader } from '@zxing/library';
-import { getProductByBarcode } from '@/lib/api';
-import { ProductData } from '@/lib/types';
+import { getProductByBarcode } from '../lib/api';
+import { ProductData } from '../lib/types';
 
 interface BarcodeScannerProps {
   onProductFound: (product: ProductData) => void;

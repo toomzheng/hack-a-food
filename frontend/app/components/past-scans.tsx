@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { formatDistanceToNow } from "date-fns"
 import { X } from "lucide-react"
-import { IProduct } from "@/lib/models/Product"
+import { IProduct } from "../../lib/models/Product"
 
 interface PastScansProps {
   currentProductId: string;

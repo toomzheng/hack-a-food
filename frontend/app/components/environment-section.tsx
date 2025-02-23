@@ -1,4 +1,4 @@
-import { IProduct } from '@/lib/models/Product';
+import { IProduct } from '../../lib/models/Product';
 import { Package } from 'lucide-react';
 
 interface EnvironmentSectionProps {
@@ -108,4 +108,3 @@ export function EnvironmentSection({ product }: EnvironmentSectionProps) {
     </div>
   );
 }
-

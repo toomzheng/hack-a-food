@@ -2,7 +2,7 @@ import { Box, Truck } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { IProduct } from '@/lib/models/Product';
+import { IProduct } from '../../lib/models/Product';
 
 interface PackagingSectionProps {
   product: IProduct;
@@ -49,4 +49,3 @@ export function PackagingSection({ product }: PackagingSectionProps) {
     </div>
   )
 }
-

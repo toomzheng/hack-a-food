@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 
 export interface IProduct {
-  _id: string;
   barcode: string;
   name: string;
   brands: string[];
@@ -12,7 +11,7 @@ export interface IProduct {
     carbohydrates_100g: number;
     sugars_100g: number;
     fat_100g: number;
-    'saturated-fat_100g': number;
+    saturated_fat_100g: number;
     fiber_100g: number;
     salt_100g: number;
   };
@@ -22,25 +21,16 @@ export interface IProduct {
   packaging: string[];
   nova_group: number;
   nutriscore_grade: string;
-  _keywords: string[];
-  image_url?: string;
-  created_at: string;
-  updated_at: string;
-  green_score?: number;
-  match_score?: number;
-  ecoscore_grade?: string;
-  origins?: string;
-  origins_tags?: string[];
-  recycling?: string;
-  additives_tags: string[];
-  additives_n: number;
+  image_url: string;
+  created_at: Date;
+  updated_at: Date;
 }
 
 const productSchema = new mongoose.Schema<IProduct>({
   barcode: { type: String, required: true, unique: true },
   name: { type: String, required: true },
-  brands: [String],
-  ingredients: [String],
+  brands: { type: [String], default: [] },
+  ingredients: { type: [String], default: [] },
   nutriments: {
     type: {
       energy_100g: { type: Number, default: 0 },
@@ -48,50 +38,26 @@ const productSchema = new mongoose.Schema<IProduct>({
       carbohydrates_100g: { type: Number, default: 0 },
       sugars_100g: { type: Number, default: 0 },
       fat_100g: { type: Number, default: 0 },
-      'saturated-fat_100g': { type: Number, default: 0 },
+      saturated_fat_100g: { type: Number, default: 0 },
       fiber_100g: { type: Number, default: 0 },
       salt_100g: { type: Number, default: 0 },
     },
     default: {},
   },
-  allergens: [String],
-  labels: [String],
-  categories: [String],
-  packaging: [String],
+  allergens: { type: [String], default: [] },
+  labels: { type: [String], default: [] },
+  categories: { type: [String], default: [] },
+  packaging: { type: [String], default: [] },
   nova_group: { type: Number, default: 0 },
   nutriscore_grade: { type: String, default: '' },
-  image_url: String,
-  created_at: { type: String, required: true },
-  updated_at: { type: String, required: true },
-  green_score: { type: Number, default: 0 },
-  match_score: { type: Number, default: 0 },
-  ecoscore_grade: String,
-  origins: String,
-  origins_tags: [String],
-  recycling: String,
-  additives_tags: { type: [String], default: [] },
-  additives_n: { type: Number, default: 0 },
+  image_url: { type: String, default: '' },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
 });
 
 // Add middleware to update the updated_at field on save
 productSchema.pre('save', function(next) {
-  this.updated_at = new Date().toISOString();
-  
-  // Calculate green score
-  let greenScore = 0;
-  if (this.labels.some(l => l.toLowerCase().includes('organic'))) greenScore += 30;
-  if (this.labels.some(l => l.toLowerCase().includes('eco'))) greenScore += 20;
-  if (this.labels.some(l => l.toLowerCase().includes('sustainable'))) greenScore += 20;
-  if (this.nova_group === 1 || this.nova_group === 2) greenScore += 30;
-  this.green_score = Math.min(greenScore, 100);
-
-  // Calculate match score
-  let matchScore = 0;
-  if (this.nutriscore_grade === 'a' || this.nutriscore_grade === 'b') matchScore += 40;
-  if (this.allergens.length === 0) matchScore += 30;
-  if (this.nova_group === 1 || this.nova_group === 2) matchScore += 30;
-  this.match_score = Math.min(matchScore, 100);
-
+  this.updated_at = new Date();
   next();
 });
 

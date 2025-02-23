@@ -2,8 +2,21 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { IProduct } from '@/lib/models/Product';
-import { getProductByBarcode } from '@/lib/api';
+import { IProduct } from '../../lib/models/Product';
+import { getProductByBarcode } from '../../lib/api';
+
+// Shopping cart icon
+const foodIcon = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <!-- Cart -->
+    <circle cx="8" cy="21" r="1" />
+    <circle cx="19" cy="21" r="1" />
+    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+    <!-- Product boxes -->
+    <rect x="9" y="8" width="3" height="4" rx="0.5" />
+    <rect x="14" y="8" width="3" height="4" rx="0.5" />
+  </svg>
+`;
 
 // Simple interface for what we need
 interface DisplayProduct {
@@ -14,7 +27,7 @@ interface DisplayProduct {
 
 export function RecommendationsSection({ product }: { product: IProduct }) {
   const [loading, setLoading] = useState(false);
-  const [products, setProducts] = useState<DisplayProduct[]>([]);
+  const [displayProducts, setDisplayProducts] = useState<DisplayProduct[]>([]);
 
   const getRecommendations = async () => {
     try {
@@ -79,7 +92,7 @@ export function RecommendationsSection({ product }: { product: IProduct }) {
         }
       }
 
-      setProducts(displayProducts);
+      setDisplayProducts(displayProducts);
     } catch (err) {
       console.error('Error:', err);
       alert('Failed to get recommendations');
@@ -100,88 +113,87 @@ export function RecommendationsSection({ product }: { product: IProduct }) {
   };
 
   return (
-    <div className="bg-gray-50 py-8">
-      <div className="max-w-[1400px] mx-auto">
-        <div className="flex items-center gap-4 mb-6 px-6">
-          <h2 className="text-xl font-semibold text-gray-900">Similar Products</h2>
-          <Button 
-            onClick={getRecommendations}
-            disabled={loading}
-            variant="outline"
-            size="sm"
-            className="bg-white hover:bg-gray-50"
-          >
-            {loading ? 'Getting Recommendations...' : 'Find Similar Products'}
-          </Button>
-        </div>
+    <div className="flex flex-col items-center justify-center w-full max-w-7xl mx-auto px-4 py-8">
+      <div className="flex flex-col items-center gap-4 mb-8">
+        <h2 className="text-2xl font-bold text-center">Similar Products</h2>
+        <Button 
+          onClick={getRecommendations}
+          disabled={loading}
+          variant="outline"
+          size="sm"
+          className="bg-white hover:bg-gray-50"
+        >
+          {loading ? 'Getting Recommendations...' : 'Find Similar Products'}
+        </Button>
+      </div>
 
-        {products.length > 0 && (
-          <div className="relative">
-            <div className="overflow-x-auto pb-4 hide-scrollbar">
-              <div className="flex gap-4 px-6" style={{ minWidth: 'min-content' }}>
-                {products.map((product, index) => (
-                  <div 
-                    key={index}
-                    className="flex-none"
-                    style={{ width: '300px' }}
-                  >
-                    <div className="bg-white border rounded-lg p-4 h-full">
-                      <div className="aspect-square w-full mb-4 bg-gray-50 rounded-md overflow-hidden">
-                        {product.image ? (
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              // Try the small version if the regular version fails
-                              if (target.src.includes('/front.jpg')) {
-                                target.src = target.src.replace('/front.jpg', '/front_small.jpg');
-                              } else if (target.src.includes('/front_small.jpg')) {
-                                target.style.display = 'none';
-                              } else {
-                                const barcode = target.src.split('/products/')[1]?.split('/front')[0];
-                                if (barcode) {
-                                  target.src = `https://images.openfoodfacts.org/images/products/${barcode}/front.jpg`;
-                                } else {
-                                  target.style.display = 'none';
-                                }
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-gray-400 text-sm">No image</span>
+      <div className="flex gap-4 overflow-x-auto pb-4 w-full justify-center">
+        {displayProducts.map((product, index) => (
+          <div key={index} className="flex-none w-[200px]">
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="relative aspect-square">
+                {product.image ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="absolute inset-0 w-full h-full object-contain"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      const parent = target.parentElement;
+                      if (!parent) return;
+
+                      // Clean up any existing error elements and text
+                      const existingElements = parent.querySelectorAll('.no-image-content');
+                      existingElements.forEach(el => el.remove());
+
+                      // Try the small version if the regular version fails
+                      if (target.src.includes('/front.jpg')) {
+                        target.src = target.src.replace('/front.jpg', '/front_small.jpg');
+                      } else {
+                        // Hide the failed image
+                        target.style.display = 'none';
+
+                        // Create error element
+                        const noImageDiv = document.createElement('div');
+                        noImageDiv.className = 'absolute inset-0 flex flex-col items-center justify-center text-gray-400 no-image-content';
+                        noImageDiv.innerHTML = `
+                          <div class="h-16 w-16 flex items-center justify-center">
+                            ${foodIcon}
                           </div>
-                        )}
-                      </div>
-                      <h3 className="font-medium text-gray-900 line-clamp-2 min-h-[2.5rem]">
-                        {product.name}
-                      </h3>
-                      <div className="mt-2">
-                        <span className="text-gray-600 text-sm">Nutri-Score: </span>
-                        <span className={`font-medium text-sm ${getNutriScoreColor(product.grade)}`}>
-                          {product.grade.toUpperCase()}
-                        </span>
-                      </div>
+                          <div class="text-center">
+                            <div class="text-sm">No Image Available</div>
+                          </div>
+                        `;
+                        parent.appendChild(noImageDiv);
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 no-image-content">
+                    <div className="h-16 w-16 flex items-center justify-center">
+                      <div dangerouslySetInnerHTML={{ __html: foodIcon }} />
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm">No Image Available</div>
                     </div>
                   </div>
-                ))}
+                )}
+              </div>
+              <div className="p-4">
+                <h3 className="font-medium text-gray-900 line-clamp-2 min-h-[2.5rem] mb-2">
+                  {product.name}
+                </h3>
+                <div className="flex items-center gap-1">
+                  <span className="text-gray-600 text-sm">Nutri-Score: </span>
+                  <span className={`font-medium text-sm ${getNutriScoreColor(product.grade)}`}>
+                    {product.grade.toUpperCase()}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        )}
+        ))}
       </div>
-
-      <style jsx global>{`
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
     </div>
   );
 }

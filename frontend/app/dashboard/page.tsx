@@ -10,7 +10,7 @@ import { PackagingSection } from "@/app/components/packaging-section"
 import { PreferencesSection } from "@/app/components/preferences-section"
 import { ProcessingSection } from "@/app/components/processing-section"
 import { RecommendationsSection } from "@/app/components/recommendations-section"
-import { IProduct } from "@/lib/models/Product"
+import { IProduct } from "../../lib/models/Product"
 import { PastScans } from "@/app/components/past-scans"
 
 function DashboardContent() {
@@ -101,77 +101,79 @@ function DashboardContent() {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="grid grid-cols-1 md:grid-cols-[1fr,300px] gap-6">
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
-            {product.brands && product.brands.length > 0 && (
-              <p className="text-gray-600 mt-2">by {product.brands.join(', ')} - (some food information may not exist in the dataset)</p>
-            )}
-          </div>
-
-          <DashboardSection title="Matching with your preferences" defaultOpen>
-            <PreferencesSection product={product} />
-          </DashboardSection>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="flex-grow overflow-y-auto">
+      <div className="w-full">
+        <div className="max-w-[1400px] mx-auto px-6 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr,300px] gap-8">
             <div className="space-y-6">
-              <DashboardSection title="Health" defaultOpen>
-                <HealthSection product={product} />
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
+                {product.brands && product.brands.length > 0 && (
+                  <p className="text-gray-600 mt-2">by {product.brands.join(', ')} - (some food information may not exist in the dataset)</p>
+                )}
+              </div>
+
+              <DashboardSection title="Matching with your preferences" defaultOpen>
+                <PreferencesSection product={product} />
               </DashboardSection>
 
-              <DashboardSection title="Food processing">
-                <ProcessingSection product={product} />
-              </DashboardSection>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  <DashboardSection title="Health" defaultOpen>
+                    <HealthSection product={product} />
+                  </DashboardSection>
+
+                  <DashboardSection title="Food processing">
+                    <ProcessingSection product={product} />
+                  </DashboardSection>
+                </div>
+
+                <div className="space-y-6">
+                  <DashboardSection title="Ingredients" defaultOpen>
+                    <IngredientsSection product={product} />
+                  </DashboardSection>
+
+                  <DashboardSection title="Environmental Impact">
+                    <EnvironmentSection product={product} />
+                  </DashboardSection>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-6">
-              <DashboardSection title="Ingredients" defaultOpen>
-                <IngredientsSection product={product} />
-              </DashboardSection>
+              {product.image_url && (
+                <div className="bg-white rounded-lg shadow-sm p-4">
+                  <img 
+                    src={product.image_url} 
+                    alt={product.name}
+                    className="w-full h-[500px] object-contain rounded-lg"
+                  />
+                </div>
+              )}
 
-              <DashboardSection title="Environmental Impact">
-                <EnvironmentSection product={product} />
+              <DashboardSection title="---------Past Scans--------- See other people's searches!">
+                <PastScans 
+                  currentProductId={product._id} 
+                  onProductSelect={handleProductSelect}
+                />
               </DashboardSection>
             </div>
           </div>
-
-          <div className="mt-8 -mx-6 w-full md:w-1/2">
-            <RecommendationsSection 
-              product={product} 
-              onProductSelect={(productId) => {
-                // Update URL with new product ID
-                const url = new URL(window.location.href);
-                url.searchParams.set('id', productId);
-                window.history.pushState({}, '', url);
-                // Fetch the new product
-                fetchProduct(productId);
-                // Scroll to top
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
-          </div>
-
         </div>
-
-        <div className="space-y-6">
-          {product.image_url && (
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <img 
-                src={product.image_url} 
-                alt={product.name}
-                className="w-full h-[500px] object-contain rounded-lg"
-              />
-            </div>
-          )}
-
-          <DashboardSection title="---------Past Scans--------- See other people's searches!">
-            <PastScans 
-              currentProductId={product._id} 
-              onProductSelect={handleProductSelect}
-            />
-          </DashboardSection>
+        <div className="w-full">
+          <RecommendationsSection 
+            product={product} 
+            onProductSelect={(productId) => {
+              // Update URL with new product ID
+              const url = new URL(window.location.href);
+              url.searchParams.set('id', productId);
+              window.history.pushState({}, '', url);
+              // Fetch the new product
+              fetchProduct(productId);
+              // Scroll to top
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { IProduct } from '@/lib/models/Product';
+import { IProduct } from '../../lib/models/Product';
 import { useState } from 'react';
 import { InfoIcon } from 'lucide-react';
 import { InfoCard } from '@/components/ui/info-card';
@@ -163,4 +163,3 @@ export function HealthSection({ product }: HealthSectionProps) {
     </div>
   );
 }
-

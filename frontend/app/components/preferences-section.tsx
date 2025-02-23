@@ -1,4 +1,4 @@
-import { IProduct } from '@/lib/models/Product';
+import { IProduct } from '../../lib/models/Product';
 
 interface PreferencesSectionProps {
   product: IProduct;
@@ -31,4 +31,3 @@ export function PreferencesSection({ product }: PreferencesSectionProps) {
     </div>
   );
 }
-
