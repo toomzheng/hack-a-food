@@ -1,5 +1,7 @@
 # Hack-A-Food
 
+Devpost: https://devpost.com/software/awefaw-5dkeva#updates
+
 What's in Hackathon food? Or food in general? Let's Hack-A-Food to find out.
 
 ## Features
@@ -10,7 +12,7 @@ What's in Hackathon food? Or food in general? Let's Hack-A-Food to find out.
 - 🌱 Environmental impact assessment
 - 💚 Health score calculation
 - 📱 Responsive design for mobile and desktop
-- 🗄️ MongoDB integration for product history
+- 🗄️ MongoDB (Storing 400k+ documents) integration for product history
 
 ## Tech Stack
 
