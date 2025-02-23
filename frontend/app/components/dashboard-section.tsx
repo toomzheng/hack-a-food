@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronUp } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import { useState } from "react"
 import type * as React from "react"
 
@@ -18,22 +18,26 @@ export function DashboardSection({ title, children, defaultOpen = false, classNa
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div
-      className={cn(
-        "bg-white rounded-lg overflow-hidden transition-all duration-300",
-        isOpen ? "border shadow-sm" : "border-t border-l border-r",
-        className,
-      )}
-    >
-      <Collapsible open={isOpen} onOpenChange={setIsOpen} className="flex-1">
-        <CollapsibleTrigger className="flex w-full items-center justify-between p-3 font-medium bg-gray-50">
-          {title}
-          <ChevronUp className={cn("h-4 w-4 transition-transform duration-300", isOpen ? "rotate-180" : "")} />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="data-[state=closed]:animate-slideUp data-[state=open]:animate-slideDown">
-          <div className="p-3">{children}</div>
-        </CollapsibleContent>
-      </Collapsible>
+    <div className="border rounded-lg shadow-sm bg-white overflow-hidden">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-4 py-3 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors"
+      >
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <ChevronDown
+          className={`h-5 w-5 transition-transform duration-200 ${
+            isOpen ? 'transform rotate-180' : ''
+          }`}
+        />
+      </button>
+      
+      <div
+        className={`transition-all duration-200 ease-in-out ${
+          isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+        } overflow-hidden`}
+      >
+        <div className="p-4">{children}</div>
+      </div>
     </div>
   )
 }
