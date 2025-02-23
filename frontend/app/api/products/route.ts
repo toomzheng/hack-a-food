@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import { Product } from '@/lib/models/Product';
+import { connectToDatabase } from '../../../lib/mongodb';
+import { Product } from '../../../lib/models/Product';
 
 export async function POST(req: Request) {
   console.log('POST /api/products called');

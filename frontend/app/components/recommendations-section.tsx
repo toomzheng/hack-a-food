@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { IProduct } from '@/lib/models/Product';
-import { getProductByBarcode } from '@/lib/api';
+import { IProduct } from '../../lib/models/Product';
+import { getProductByBarcode } from '../../lib/api';
 
 // Shopping cart icon
 const foodIcon = `

@@ -11,7 +11,7 @@ class FoodRecommender:
         # Weights for scoring
         self.weights = {
             'name_similarity': 0.6,
-            'keyword_similarity': 0.4
+            'keyword_similarity': 0.44
         }
         
         try:
@@ -20,7 +20,7 @@ class FoodRecommender:
             self.db = self.client['food_products']
             
             # First, just get all products with names and keywords
-            self.food_data = list(self.db['openfoodfacts'].find(
+            self.food_data = list(self.db['openfoodproducts'].find(
                 {
                     "product_name": {"$exists": True},
                     "_keywords": {"$exists": True},

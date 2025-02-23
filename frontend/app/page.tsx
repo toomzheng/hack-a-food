@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import BarcodeScanner from "@/components/BarcodeScanner"
-import { ProductData } from "@/lib/types"
+import { ProductData } from "../lib/types"
 import { Particles } from "@/components/ui/particles"
 
 export default function HomePage() {
@@ -56,4 +56,3 @@ export default function HomePage() {
     </div>
   )
 }
-

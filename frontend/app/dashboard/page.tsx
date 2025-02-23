@@ -10,7 +10,7 @@ import { PackagingSection } from "@/app/components/packaging-section"
 import { PreferencesSection } from "@/app/components/preferences-section"
 import { ProcessingSection } from "@/app/components/processing-section"
 import { RecommendationsSection } from "@/app/components/recommendations-section"
-import { IProduct } from "@/lib/models/Product"
+import { IProduct } from "../../lib/models/Product"
 import { PastScans } from "@/app/components/past-scans"
 
 function DashboardContent() {

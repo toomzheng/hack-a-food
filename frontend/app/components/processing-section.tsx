@@ -1,5 +1,5 @@
 import { AlertTriangle, InfoIcon } from "lucide-react"
-import { IProduct } from '@/lib/models/Product';
+import { IProduct } from '../../lib/models/Product';
 import { useMemo, useState } from 'react';
 import { Badge } from "@/components/ui/badge"
 import { InfoCard } from "@/components/ui/info-card"
@@ -117,4 +117,3 @@ export function ProcessingSection({ product }: ProcessingSectionProps) {
     </div>
   );
 }
-
