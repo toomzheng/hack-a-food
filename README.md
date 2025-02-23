@@ -1,62 +1,93 @@
-# Barcode Scanner for Food Nutrition
+# Hack-A-Food
 
-This application uses your computer's webcam to scan food product barcodes and retrieve nutritional information from the Open Food Facts database.
+What's in Hackathon food? Or food in general? Let's Hack-A-Food to find out.
 
 ## Features
 
-- Real-time barcode scanning using webcam
-- Integration with Open Food Facts API
-- Detailed nutritional information display
-- Visual feedback during scanning
-- Support for multiple barcode formats
+- 📸 Real-time barcode scanning using device camera
+- 🔍 Product information lookup using Open Food Facts database
+- 📊 Nutritional analysis and scoring
+- 🌱 Environmental impact assessment
+- 💚 Health score calculation
+- 📱 Responsive design for mobile and desktop
+- 🗄️ MongoDB integration for product history
 
-## Requirements
+## Tech Stack
 
-- Python 3.7+
-- Webcam
-- Internet connection
-- ZBar library (required for barcode scanning)
+- **Frontend**: Next.js 15, React, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: MongoDB
+- **Barcode Scanning**: ZXing Library
+- **Camera Access**: react-webcam
+- **Recommender System**: Pytorch, Scikit, Flask
+
+## Prerequisites
+
+- Node.js 18+ 
+- MongoDB database
+- npm or yarn
+- Modern web browser with camera access
+
+## Environment Setup
+
+Create a `.env.local` file in the root directory with:
+
+```env
+MONGODB_URI=your_mongodb_connection_string
+```
 
 ## Installation
 
-1. Install the ZBar library:
-   - On macOS: `brew install zbar`
-   - On Ubuntu/Debian: `sudo apt-get install libzbar0`
-   - On Windows: Download and install from [here](http://zbar.sourceforge.net/)
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd hacklytics-2025
+```
 
-2. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Run the development server:
+```bash
+npm run dev
+```
+
+4. Build for production:
+```bash
+npm run build
+npm start
+```
 
 ## Usage
 
-1. Run the application:
-   ```bash
-   python barcode_scanner.py
-   ```
+1. Open the application in your browser
+2. Click "Scan Food" to activate the camera
+3. Point the camera at a product barcode
+4. View detailed product information and scores
+5. Check past scans in the history section
 
-2. Hold a product barcode in front of your webcam
-3. The application will automatically detect and scan the barcode
-4. Nutritional information will be displayed on the screen
-5. Choose whether to scan another product or exit
+## API Routes
 
-## Nutritional Information Displayed
+- `GET /api/products` - Get all scanned products
+- `GET /api/products?id={id}` - Get specific product
+- `POST /api/products` - Save new product scan
+- `DELETE /api/products/{id}` - Delete product from history
 
-- Product Name
-- Brand
-- Nutrition Grade
-- Calories
-- Proteins
-- Carbohydrates
-- Fat
-- Fiber
-- Salt
-- Ingredients
-- Allergens
+## Contributing
 
-## Notes
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-- The application uses the Open Food Facts database, which is community-driven
-- Some products may not be found in the database
-- The accuracy of nutritional information depends on the database entries
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Open Food Facts for their comprehensive food database
+- The Hacklytics 2025 team and organizers
