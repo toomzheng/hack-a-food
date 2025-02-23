@@ -104,7 +104,7 @@ export function HealthSection({ product }: HealthSectionProps) {
       )}
 
       <div>
-        <h3 className="font-semibold mb-2">Nutritional Information (per 100g)</h3>
+        <h3 className="font-semibold mb-2">Nutritional Information (per 100g) - Hover For Info!</h3>
         <div className="grid grid-cols-2 gap-2">
           <NutrientBox 
             title="Energy" 

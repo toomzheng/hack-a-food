@@ -90,7 +90,7 @@ export function PastScans({ currentProductId, onProductSelect }: PastScansProps)
           key={product._id}
           className={`group rounded-lg shadow-sm p-3 flex items-center gap-4 transition-all relative
             ${product._id === currentProductId 
-              ? 'bg-gray-100 ring-1 ring-gray-200' 
+              ? 'bg-gray-800 ring-1 ring-gray-700 text-white' 
               : 'bg-white hover:bg-gray-50'}`}
         >
           <div 
@@ -105,8 +105,12 @@ export function PastScans({ currentProductId, onProductSelect }: PastScansProps)
               />
             )}
             <div className="min-w-0">
-              <h3 className="font-medium text-gray-900 truncate">{product.name}</h3>
-              <p className="text-sm text-gray-500">
+              <h3 className={`font-medium truncate ${
+                product._id === currentProductId ? 'text-white' : 'text-gray-900'
+              }`}>{product.name}</h3>
+              <p className={`text-sm ${
+                product._id === currentProductId ? 'text-gray-300' : 'text-gray-500'
+              }`}>
                 {formatDistanceToNow(new Date(product.created_at), { addSuffix: true })}
               </p>
             </div>
