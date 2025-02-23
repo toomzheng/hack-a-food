@@ -5,6 +5,19 @@ import { Button } from '@/components/ui/button';
 import { IProduct } from '@/lib/models/Product';
 import { getProductByBarcode } from '@/lib/api';
 
+// Shopping cart icon
+const foodIcon = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <!-- Cart -->
+    <circle cx="8" cy="21" r="1" />
+    <circle cx="19" cy="21" r="1" />
+    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+    <!-- Product boxes -->
+    <rect x="9" y="8" width="3" height="4" rx="0.5" />
+    <rect x="14" y="8" width="3" height="4" rx="0.5" />
+  </svg>
+`;
+
 // Simple interface for what we need
 interface DisplayProduct {
   name: string;
@@ -100,8 +113,8 @@ export function RecommendationsSection({ product }: { product: IProduct }) {
   };
 
   return (
-    <div className="bg-gray-50 py-8">
-      <div className="max-w-[1400px] mx-auto">
+    <div className="bg-gray-50 py-8 w-full">
+      <div className="w-full">
         <div className="flex items-center gap-4 mb-6 px-6">
           <h2 className="text-xl font-semibold text-gray-900">Similar Products</h2>
           <Button 
@@ -116,9 +129,9 @@ export function RecommendationsSection({ product }: { product: IProduct }) {
         </div>
 
         {products.length > 0 && (
-          <div className="relative">
-            <div className="overflow-x-auto pb-4 hide-scrollbar">
-              <div className="flex gap-4 px-6" style={{ minWidth: 'min-content' }}>
+          <div className="relative w-full">
+            <div className="overflow-x-auto pb-4 hide-scrollbar w-full">
+              <div className="flex gap-4 px-6 w-full" style={{ minWidth: 'min-content' }}>
                 {products.map((product, index) => (
                   <div 
                     key={index}
@@ -138,20 +151,50 @@ export function RecommendationsSection({ product }: { product: IProduct }) {
                               if (target.src.includes('/front.jpg')) {
                                 target.src = target.src.replace('/front.jpg', '/front_small.jpg');
                               } else if (target.src.includes('/front_small.jpg')) {
-                                target.style.display = 'none';
+                                // If small version fails, hide image and show "No Image" text
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  target.style.display = 'none';
+                                  const noImageDiv = document.createElement('div');
+                                  noImageDiv.className = 'w-full h-full flex flex-col items-center justify-center text-gray-400';
+                                  noImageDiv.innerHTML = `
+                                    <div class="h-16 w-16 mb-2">
+                                      ${foodIcon}
+                                    </div>
+                                    <span class="text-sm mt-2">No Image Available</span>
+                                    <span class="text-xs mt-1 text-gray-500">${product.name}</span>
+                                  `;
+                                  parent.appendChild(noImageDiv);
+                                }
                               } else {
                                 const barcode = target.src.split('/products/')[1]?.split('/front')[0];
                                 if (barcode) {
                                   target.src = `https://images.openfoodfacts.org/images/products/${barcode}/front.jpg`;
                                 } else {
-                                  target.style.display = 'none';
+                                  // If all attempts fail, show "No Image" with nice styling
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    target.style.display = 'none';
+                                    const noImageDiv = document.createElement('div');
+                                    noImageDiv.className = 'w-full h-full flex flex-col items-center justify-center text-gray-400';
+                                    noImageDiv.innerHTML = `
+                                      <div class="h-16 w-16 mb-2">
+                                        ${foodIcon}
+                                      </div>
+                                      <span class="text-sm mt-2">No Image Available</span>
+                                      <span class="text-xs mt-1 text-gray-500">${product.name}</span>
+                                    `;
+                                    parent.appendChild(noImageDiv);
+                                  }
                                 }
                               }
                             }}
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-gray-400 text-sm">No image</span>
+                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                            <div className="h-16 w-16 mb-2" dangerouslySetInnerHTML={{ __html: foodIcon }} />
+                            <span className="text-sm mt-2">No Image Available</span>
+                            <span className="text-xs mt-1 text-gray-500">{product.name}</span>
                           </div>
                         )}
                       </div>

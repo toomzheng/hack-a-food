@@ -20,7 +20,7 @@ class FoodRecommender:
             self.db = self.client['food_products']
             
             # First, just get all products with names and keywords
-            self.food_data = list(self.db['openfoodproducts'].find(
+            self.food_data = list(self.db['openfoodfacts'].find(
                 {
                     "product_name": {"$exists": True},
                     "_keywords": {"$exists": True},
