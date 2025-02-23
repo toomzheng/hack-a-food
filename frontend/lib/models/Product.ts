@@ -22,6 +22,7 @@ export interface IProduct {
   packaging: string[];
   nova_group: number;
   nutriscore_grade: string;
+  _keywords: string[];
   image_url?: string;
   created_at: string;
   updated_at: string;

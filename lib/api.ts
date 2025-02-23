@@ -23,6 +23,7 @@ export async function getProductByBarcode(barcode: string): Promise<ProductData>
     code: data.code,
     product_name: data.product.product_name,
     brands: data.product.brands,
+    _keywords: data.product._keywords,
     ingredients_text: data.product.ingredients_text,
     nutriments: data.product.nutriments,
     allergens: data.product.allergens,

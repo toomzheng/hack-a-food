@@ -17,6 +17,7 @@ export interface ProductData {
   labels?: string;
   categories?: string;
   packaging?: string;
+  _keywords: string[];
   nova_group?: number;
   nutriscore_grade?: string;
   image_url?: string;

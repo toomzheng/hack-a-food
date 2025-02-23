@@ -9,6 +9,7 @@ import { IngredientsSection } from "@/app/components/ingredients-section"
 import { PackagingSection } from "@/app/components/packaging-section"
 import { PreferencesSection } from "@/app/components/preferences-section"
 import { ProcessingSection } from "@/app/components/processing-section"
+import { RecommendationsSection } from "@/app/components/recommendations-section"
 import { IProduct } from "@/lib/models/Product"
 import { PastScans } from "@/app/components/past-scans"
 
@@ -135,6 +136,23 @@ function DashboardContent() {
               </DashboardSection>
             </div>
           </div>
+
+          <div className="mt-8 -mx-6 w-full md:w-1/2">
+            <RecommendationsSection 
+              product={product} 
+              onProductSelect={(productId) => {
+                // Update URL with new product ID
+                const url = new URL(window.location.href);
+                url.searchParams.set('id', productId);
+                window.history.pushState({}, '', url);
+                // Fetch the new product
+                fetchProduct(productId);
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          </div>
+
         </div>
 
         <div className="space-y-6">
@@ -183,4 +201,3 @@ export default function DashboardPage() {
     </Suspense>
   );
 }
-

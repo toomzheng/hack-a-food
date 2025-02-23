@@ -30,11 +30,20 @@ class FoodRecommender:
                     "_keywords": 1,
                     "nutriscore_grade": 1,
                     "url": 1,
-                    "_id": 0
+                    "image_url": 1,
+                    "code": 1,
+                    "_id": 1
                 }
             ))
             
             print(f"Initial products found: {len(self.food_data)}")
+            
+            # Debug: Print a sample product with all fields
+            if len(self.food_data) > 0:
+                print("\nSample product fields:")
+                sample = self.food_data[0]
+                print(f"Fields available: {list(sample.keys())}")
+                print(f"Image URL: {sample.get('image_url', 'Not found')}")
             
             # Filter for valid products
             self.food_data = [
@@ -190,6 +199,10 @@ def main():
         print(f"Nutriscore: {product['nutriscore_grade'].upper()}")
     if 'url' in product:
         print(f"URL: {product['url']}")
+    if 'image_url' in product:
+        print(f"Image URL: {product['image_url']}")
+    if 'code' in product:
+        print(f"Code: {product['code']}")
     
     # Get recommendations
     print("\nTop Similar Products:")
@@ -203,6 +216,10 @@ def main():
             print(f"Nutriscore: {item['nutriscore_grade'].upper()}")
         if 'url' in item:
             print(f"URL: {item['url']}")
+        if 'image_url' in item:
+            print(f"Image URL: {item['image_url']}")
+        if 'code' in item:
+            print(f"Code: {item['code']}")
 
 if __name__ == "__main__":
     main()
