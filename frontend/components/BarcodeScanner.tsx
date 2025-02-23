@@ -15,6 +15,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onProductFound, isScann
   const webcamRef = useRef<Webcam>(null);
   const [error, setError] = useState<string>('');
   const [scanning, setScanning] = useState(false);
+  const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
 
   const saveToMongoDB = async (product: ProductData) => {
     try {
@@ -53,30 +54,17 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onProductFound, isScann
         }),
       });
 
-      const responseText = await response.text();
-      console.log('Raw response:', responseText);
-
       if (!response.ok) {
-        try {
-          const errorData = JSON.parse(responseText);
-          console.error('Server error:', errorData);
-          throw new Error(`Failed to save to MongoDB: ${errorData.error || response.statusText}`);
-        } catch (e) {
-          console.error('Error parsing error response:', e);
-          throw new Error(`Failed to save to MongoDB: ${response.statusText}`);
-        }
+        const errorText = await response.text();
+        console.error('Server error response:', errorText);
+        throw new Error(`Failed to save to MongoDB: ${response.statusText}`);
       }
 
-      try {
-        const savedProduct = JSON.parse(responseText);
-        console.log('Successfully saved product:', savedProduct);
-        onProductFound(savedProduct);
-        router.push(`/dashboard?id=${savedProduct._id}`);
-        return savedProduct;
-      } catch (e) {
-        console.error('Error parsing success response:', e);
-        throw new Error('Invalid response from server');
-      }
+      const savedProduct = await response.json();
+      console.log('Successfully saved product:', savedProduct);
+      onProductFound(savedProduct);
+      router.push(`/dashboard?id=${savedProduct._id}`);
+      return savedProduct;
     } catch (error) {
       console.error('Error saving to MongoDB:', error);
       setError(error instanceof Error ? error.message : 'Failed to save product');
@@ -85,23 +73,30 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onProductFound, isScann
   };
 
   useEffect(() => {
-    if (!isScanning) return;
+    if (!isScanning) {
+      if (codeReaderRef.current) {
+        codeReaderRef.current.reset();
+        codeReaderRef.current = null;
+      }
+      setScanning(false);
+      return;
+    }
 
-    const codeReader = new BrowserMultiFormatReader();
+    codeReaderRef.current = new BrowserMultiFormatReader();
     let mounted = true;
 
     const scanBarcode = async () => {
-      if (!webcamRef.current?.video || scanning) return;
+      if (!webcamRef.current?.video || scanning || !codeReaderRef.current) return;
 
       try {
-        const result = await codeReader.decodeFromVideoElement(webcamRef.current.video);
+        const result = await codeReaderRef.current.decodeFromVideoElement(webcamRef.current.video);
         if (result && mounted) {
           setScanning(true);
           try {
             console.log('Barcode detected:', result.getText());
             const product = await getProductByBarcode(result.getText());
             console.log('Product data fetched:', product);
-            const savedProduct = await saveToMongoDB(product);
+            await saveToMongoDB(product);
           } catch (error) {
             console.error('Error in scan process:', error);
             setError(error instanceof Error ? error.message : 'Failed to process product');
@@ -121,7 +116,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onProductFound, isScann
 
     return () => {
       mounted = false;
-      codeReader.reset();
+      if (codeReaderRef.current) {
+        codeReaderRef.current.reset();
+      }
     };
   }, [isScanning, onProductFound, scanning, router]);
 
@@ -129,9 +126,10 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onProductFound, isScann
     <div className="relative w-full max-w-md mx-auto">
       {isScanning && (
         <>
+          <div className="absolute inset-0 bg-gray-900/90 rounded-lg" />
           <Webcam
             ref={webcamRef}
-            className="w-full rounded-lg shadow-lg"
+            className="w-full rounded-lg shadow-lg mix-blend-lighten"
             screenshotFormat="image/jpeg"
             videoConstraints={{
               facingMode: 'environment',

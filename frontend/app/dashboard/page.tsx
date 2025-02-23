@@ -148,7 +148,7 @@ export default function DashboardPage() {
             </div>
           )}
 
-          <DashboardSection title="Past Scans">
+          <DashboardSection title="---------Past Scans--------- See other people's searches!">
             <PastScans 
               currentProductId={product._id} 
               onProductSelect={handleProductSelect}

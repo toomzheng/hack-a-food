@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     }
 
     try {
+      // Always create a new entry with updated timestamps
       console.log('Creating new product with data:', product);
       const newProduct = await Product.create({
         barcode: product.barcode,
@@ -43,8 +44,8 @@ export async function POST(req: Request) {
         image_url: product.image_url,
         additives_tags: product.additives_tags || [],
         additives_n: product.additives_n || 0,
-        created_at: product.created_at || new Date().toISOString(),
-        updated_at: product.updated_at || new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       });
 
       // Scores are automatically calculated in the pre-save middleware

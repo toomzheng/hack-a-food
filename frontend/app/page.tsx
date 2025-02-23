@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import BarcodeScanner from "@/components/BarcodeScanner"
 import { ProductData } from "@/lib/types"
+import { Particles } from "@/components/ui/particles"
 
 export default function HomePage() {
   const [isScanning, setIsScanning] = useState(false)
@@ -16,27 +17,38 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold mb-8">Food Scanner</h1>
-      {!isScanning ? (
-        <Button onClick={() => setIsScanning(true)} size="lg">
-          Scan Food
-        </Button>
-      ) : (
-        <div className="w-full max-w-md">
-          <BarcodeScanner 
-            isScanning={isScanning} 
-            onProductFound={handleProductFound} 
-          />
-          <Button 
-            onClick={() => setIsScanning(false)} 
-            variant="outline" 
-            className="mt-4 w-full"
-          >
-            Cancel Scan
+    <div className="relative min-h-screen bg-white">
+      <Particles
+        className="absolute inset-0"
+        quantity={100}
+        staticity={50}
+        ease={50}
+        color="#000000"
+      />
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
+        <p className="text-gray-600 text-lg mb-2">Welcome to:</p>
+        <h1 className="text-4xl font-bold mb-4">Hack-A-Food!</h1>
+        <p className="text-gray-600 text-lg mb-8">Scan any packaged food barcode of your choice below!</p>
+        {!isScanning ? (
+          <Button onClick={() => setIsScanning(true)} size="lg">
+            Scan Food
           </Button>
-        </div>
-      )}
+        ) : (
+          <div className="w-full max-w-md">
+            <BarcodeScanner 
+              isScanning={isScanning} 
+              onProductFound={handleProductFound} 
+            />
+            <Button 
+              onClick={() => setIsScanning(false)} 
+              variant="outline" 
+              className="mt-4 w-full"
+            >
+              Cancel Scan
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
