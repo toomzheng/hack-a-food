@@ -146,6 +146,67 @@ class FoodRecommender:
         """Get a random product from the database"""
         return random.choice(self.food_data)
 
+    def get_recommendations(self, product_id: str, n_recommendations: int = 5) -> List[Dict]:
+        try:
+            # Find the target product
+            target_product = next(
+                (item for item in self.food_data if str(item['code']) == str(product_id)),
+                None
+            )
+            
+            if not target_product:
+                print(f"Product {product_id} not found")
+                return []
+            
+            # Get target product text
+            target_name = str(target_product['product_name']).lower().strip()
+            target_keywords = ' '.join(str(k).lower().strip() for k in target_product['_keywords'])
+            
+            # Transform target text
+            target_name_vector = self.name_vectorizer.transform([target_name])
+            target_keyword_vector = self.keyword_vectorizer.transform([target_keywords])
+            
+            # Calculate similarities
+            name_similarities = cosine_similarity(target_name_vector, self.name_matrix).flatten()
+            keyword_similarities = cosine_similarity(target_keyword_vector, self.keyword_matrix).flatten()
+            
+            # Combine scores with weights
+            final_scores = (
+                self.weights['name_similarity'] * name_similarities +
+                self.weights['keyword_similarity'] * keyword_similarities
+            )
+            
+            # Get indices of top similar products (excluding the target product)
+            # Get more candidates than needed for randomization
+            n_candidates = min(n_recommendations * 3, len(self.food_data))
+            similar_indices = np.argsort(final_scores)[::-1][:n_candidates]
+            
+            # Filter out the target product
+            similar_indices = [idx for idx in similar_indices if self.food_data[idx]['code'] != product_id]
+            
+            # Randomly select n_recommendations from the candidates
+            if len(similar_indices) > n_recommendations:
+                similar_indices = random.sample(similar_indices, n_recommendations)
+            
+            # Get the recommended products
+            recommendations = []
+            for idx in similar_indices:
+                product = self.food_data[idx]
+                recommendations.append({
+                    'id': str(product['code']),
+                    'name': product['product_name'],
+                    'image': product.get('image_url', None),
+                    'url': product.get('url', None),
+                    'grade': product.get('nutriscore_grade', 'unknown'),
+                    'score': float(final_scores[idx])
+                })
+            
+            return recommendations
+            
+        except Exception as e:
+            print(f"Error in get_recommendations: {str(e)}")
+            return []
+
     def find_similar_products(self, product: Dict, top_k: int = 5) -> List[Tuple[float, Dict]]:
         """Find similar products based on name and keyword similarity"""
         try:
