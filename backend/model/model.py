@@ -1,204 +1,153 @@
-import gym
-import numpy as np
 import pymongo
 import os
-import random
-from stable_baselines3 import DQN
+import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.preprocessing import StandardScaler
+import random
+from typing import List, Dict, Tuple
 
-class FoodRecommendationEnv(gym.Env):
+class FoodRecommender:
     def __init__(self):
-        super(FoodRecommendationEnv, self).__init__()
-        
-        # Define weights for different components
+        # Weights for scoring
         self.weights = {
-            'keyword_similarity': 0.5,  # Increased weight for keyword matching
-            'nutri_score': 0.3,        # Nutrition is important
-            'nova_group': 0.1,         # Processing level less important
-            'eco_score': 0.1           # Environmental impact less important
+            'name_similarity': 0.5,    # Higher weight for name matching
+            'keyword_similarity': 0.5   # Lower weight for keyword matching
         }
         
-        # Connect to MongoDB
+        # Connect to MongoDB and get products
         try:
             self.client = pymongo.MongoClient(os.getenv("MONGO_URI", "mongodb+srv://tomzheng1012:feg0yDprkZh5Fewq@scanned-items.uug7q.mongodb.net/?retryWrites=true&w=majority&appName=scanned-items"))
             self.db = self.client['food_products']
+            self.food_data = list(self.db['openfoodproducts'].find(
+                {
+                    "product_name": {"$exists": True, "$ne": ""},
+                    "_keywords": {"$exists": True, "$ne": []}
+                },
+                {
+                    "product_name": 1,
+                    "_keywords": 1,
+                    "nutriscore_grade": 1,
+                    "url": 1,
+                    "_id": 0
+                }
+            ))
             
-            # Get recommendation pool and cache it
-            self.recommendation_collection = self.db['openfoodproducts']
-            self.food_data = list(self.recommendation_collection.find({}, {"_id": 0}))
-            self.num_products = len(self.food_data)
-            print(f"Found {self.num_products} products in the recommendation pool")
+            # Filter out invalid products
+            self.food_data = [
+                item for item in self.food_data
+                if self._is_valid_product(item)
+            ]
             
-            # Get user's scanned item and cache it
-            self.user_collection = self.db['products']
-            self.scanned_item = self.user_collection.find_one({}, {"_id": 0})
-            if not self.scanned_item:
-                raise Exception("No scanned item found in products collection")
+            print(f"Loaded {len(self.food_data)} valid products")
             
-            # Initialize TF-IDF vectorizer with better parameters for food items
-            self.vectorizer = TfidfVectorizer(
-                ngram_range=(1, 2),     # Use both unigrams and bigrams
-                max_features=1000,      # Limit vocabulary size
-                min_df=2,              # Minimum document frequency
-                stop_words='english',   # Remove common English words
-                analyzer='word',        # Analyze at word level
-                token_pattern=r'[a-zA-Z0-9]+', # Include numbers in tokens
+            # Initialize vectorizers
+            self.name_vectorizer = TfidfVectorizer(
+                ngram_range=(1, 3),
+                max_features=5000,
+                analyzer='char_wb',  # Better for product names
+                stop_words=None
             )
             
-            # Pre-compute keyword vectors for all items
-            all_keywords = [self._prepare_text(item) for item in self.food_data]
-            self.keyword_vectors = self.vectorizer.fit_transform(all_keywords)
+            self.keyword_vectorizer = TfidfVectorizer(
+                ngram_range=(1, 2),
+                max_features=5000,
+                stop_words='english'
+            )
             
-            # Pre-compute scanned item vector
-            self.scanned_text = self._prepare_text(self.scanned_item)
-            self.scanned_vector = self.vectorizer.transform([self.scanned_text])
+            # Prepare text for vectorization
+            product_names = [str(item['product_name']).lower() for item in self.food_data]
+            product_keywords = [' '.join(item['_keywords']).lower() for item in self.food_data]
             
-            # Cache for similarity scores
-            self.similarity_cache = {}
+            # Compute TF-IDF matrices
+            self.name_matrix = self.name_vectorizer.fit_transform(product_names)
+            self.keyword_matrix = self.keyword_vectorizer.fit_transform(product_keywords)
+            
+            print("Vectorization completed!")
             
         except Exception as e:
-            print(f"Error with MongoDB: {e}")
+            print(f"Error initializing recommender: {e}")
             raise
-        
-        # Define the action and observation spaces
-        self.features = ['keyword_similarity', 'nutriscore_grade', 'nova_groups', 'ecoscore_grade']
-        self.observation_space = gym.spaces.Box(
-            low=0, 
-            high=1,  # Normalized to [0,1]
-            shape=(len(self.features),),
-            dtype=np.float32
+
+    def _is_valid_product(self, item: Dict) -> bool:
+        """Check if a product has valid data"""
+        if not item.get('product_name') or not item.get('_keywords'):
+            return False
+            
+        name = str(item['product_name']).lower()
+        return (
+            len(name) > 0 and
+            'n/a' not in name and 
+            'unknown' not in name and
+            isinstance(item['_keywords'], list) and
+            len(item['_keywords']) > 0
         )
-        self.action_space = gym.spaces.Discrete(self.num_products)
-        
-        self.current_food = self.scanned_item
-        self.recommended_items = set()
-        self.steps = 0
-        self.max_steps = 20
-        self.rng = np.random.default_rng()
 
-    def seed(self, seed=None):
-        """Set random seed for reproducibility"""
-        self.rng = np.random.default_rng(seed)
-        random.seed(seed)
-        return [seed]
+    def get_random_product(self) -> Dict:
+        """Get a random product from the database"""
+        return random.choice(self.food_data)
 
-    def _prepare_text(self, item):
-        """Prepare text for TF-IDF by combining relevant fields"""
-        fields = ['product_name', 'brands', 'categories', '_keywords']
-        text_parts = []
-        for field in fields:
-            value = item.get(field, '')
-            if isinstance(value, list):
-                value = ' '.join(value)
-            text_parts.append(str(value).lower())
-        return ' '.join(text_parts)
+    def find_similar_products(self, product: Dict, top_k: int = 5) -> List[Tuple[float, Dict]]:
+        """Find similar products based on name and keyword similarity"""
+        try:
+            # Get product name and keywords
+            query_name = str(product['product_name']).lower()
+            query_keywords = ' '.join(product['_keywords']).lower()
+            
+            # Transform query
+            query_name_vector = self.name_vectorizer.transform([query_name])
+            query_keyword_vector = self.keyword_vectorizer.transform([query_keywords])
+            
+            # Calculate similarities
+            name_similarities = cosine_similarity(query_name_vector, self.name_matrix)[0]
+            keyword_similarities = cosine_similarity(query_keyword_vector, self.keyword_matrix)[0]
+            
+            # Combine scores with weights
+            final_scores = (
+                self.weights['name_similarity'] * name_similarities +
+                self.weights['keyword_similarity'] * keyword_similarities
+            )
+            
+            # Get top K similar products
+            similar_products = []
+            for idx in np.argsort(final_scores)[::-1]:
+                if len(similar_products) >= top_k:
+                    break
+                    
+                # Skip the query product itself
+                if self.food_data[idx] == product:
+                    continue
+                    
+                similar_products.append((final_scores[idx], self.food_data[idx]))
+            
+            return similar_products
+            
+        except Exception as e:
+            print(f"Error finding similar products: {e}")
+            return []
 
-    def _convert_grade_to_number(self, grade):
-        """Convert letter grades to numbers with better unknown handling"""
-        if isinstance(grade, (int, float)):
-            return float(grade)
-        grade_map = {'a': 1.0, 'b': 0.8, 'c': 0.6, 'd': 0.4, 'e': 0.2}
-        return grade_map.get(str(grade).lower(), 0.5)  # Unknown is middle ground
+def main():
+    # Initialize recommender
+    recommender = FoodRecommender()
+    
+    # Get a random product
+    product = recommender.get_random_product()
+    
+    print("\nSelected Random Product:")
+    print(f"Name: {product['product_name']}")
+    print(f"Keywords: {', '.join(product['_keywords'])}")
+    print(f"Nutriscore: {product.get('nutriscore_grade', '').upper()}")
+    print(f"URL: {product.get('url', '')}")
+    
+    # Get recommendations
+    print("\nTop Similar Products:")
+    similar_products = recommender.find_similar_products(product)
+    
+    for rank, (score, item) in enumerate(similar_products, 1):
+        print(f"\n{rank}. Similarity Score: {score:.3f}")
+        print(f"Name: {item['product_name']}")
+        print(f"Keywords: {', '.join(item['_keywords'])}")
+        print(f"Nutriscore: {item.get('nutriscore_grade', '').upper()}")
+        print(f"URL: {item.get('url', '')}")
 
-    def calculate_keyword_similarity(self, food_item):
-        """Calculate cosine similarity using pre-computed vectors"""
-        item_id = id(food_item)
-        if item_id in self.similarity_cache:
-            return self.similarity_cache[item_id]
-        
-        item_text = self._prepare_text(food_item)
-        vector = self.vectorizer.transform([item_text])
-        similarity = float(cosine_similarity(self.scanned_vector, vector)[0][0])
-        self.similarity_cache[item_id] = similarity
-        return similarity
-
-    def _get_observation(self, food_item):
-        """Get normalized observation vector"""
-        # Calculate keyword similarity
-        keyword_sim = self.calculate_keyword_similarity(food_item)
-        
-        # Get and normalize scores
-        nutri_score = self._convert_grade_to_number(food_item.get('nutriscore_grade', food_item.get('nutrition_grade_fr', 'unknown')))
-        nova_score = 1.0 - (float(food_item.get('nova_groups', 2)) / 4.0)  # Normalize NOVA score and invert (lower is better)
-        eco_score = self._convert_grade_to_number(food_item.get('ecoscore_grade', 'unknown'))
-        
-        return np.array([
-            keyword_sim,
-            nutri_score,
-            nova_score,
-            eco_score
-        ], dtype=np.float32)
-
-    def calculate_reward(self, recommended_food):
-        """Calculate reward with emphasis on similarity and nutrition"""
-        obs = self._get_observation(recommended_food)
-        
-        # Calculate base reward
-        reward = (
-            self.weights['keyword_similarity'] * obs[0] +
-            self.weights['nutri_score'] * obs[1] +
-            self.weights['nova_group'] * obs[2] +
-            self.weights['eco_score'] * obs[3]
-        )
-        
-        # Add penalties
-        if id(recommended_food) in self.recommended_items:
-            reward -= 0.5  # Penalty for repeated recommendations
-        
-        if obs[0] < 0.1:  # If similarity is too low
-            reward -= 0.3  # Penalty for irrelevant recommendations
-        
-        return reward
-
-    def step(self, action):
-        """Take a step in the environment"""
-        self.steps += 1
-        recommended_food = self.food_data[action]
-        
-        # Calculate reward
-        reward = self.calculate_reward(recommended_food)
-        
-        # Add to recommended items
-        self.recommended_items.add(id(recommended_food))
-        
-        # Check if episode should end
-        done = self.steps >= self.max_steps
-        
-        return self._get_observation(recommended_food), reward, done, {}
-
-    def reset(self):
-        """Reset the environment"""
-        self.steps = 0
-        self.recommended_items.clear()
-        return self._get_observation(self.current_food)
-
-# Only run training if this file is run directly
 if __name__ == "__main__":
-    # Create environment and model with optimized parameters
-    env = FoodRecommendationEnv()
-    model = DQN(
-        "MlpPolicy",
-        env,
-        verbose=1,
-        learning_rate=3e-4,
-        batch_size=128,
-        buffer_size=10000,
-        learning_starts=5000,
-        target_update_interval=1000,
-        train_freq=8,
-        gradient_steps=4,
-        exploration_fraction=0.3,
-        exploration_final_eps=0.01,
-        gamma=0.99,
-        policy_kwargs=dict(net_arch=[256, 256]),
-        seed=42
-    )
-    
-    print("\nStarting training...")
-    model.learn(total_timesteps=20000)
-    print("Training completed!")
-    
-    # Save the trained model
-    model.save("food_recommendation_model")
+    main()
