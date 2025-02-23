@@ -106,7 +106,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
             {product.brands && product.brands.length > 0 && (
-              <p className="text-gray-600 mt-2">by {product.brands.join(', ')}</p>
+              <p className="text-gray-600 mt-2">by {product.brands.join(', ')} - (some food information may not exist in the dataset)</p>
             )}
           </div>
 

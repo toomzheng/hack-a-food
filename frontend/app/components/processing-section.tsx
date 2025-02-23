@@ -59,13 +59,7 @@ export function ProcessingSection({ product }: ProcessingSectionProps) {
       {formattedAdditives.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <h3 className="font-medium">Additives ({product.additives_n})</h3>
-            <button
-              onClick={() => toggleAdditive(0)}
-              className="text-blue-500 hover:text-blue-600 transition-colors"
-            >
-              <InfoIcon className="w-4 h-4" />
-            </button>
+            <h3 className="font-medium">Additives - Click Each to Learn More! ({product.additives_n})</h3>
           </div>
           <div className="flex flex-wrap gap-2">
             {formattedAdditives.map((additive, index) => (
