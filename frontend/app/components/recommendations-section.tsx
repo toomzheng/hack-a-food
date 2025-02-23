@@ -27,7 +27,7 @@ interface DisplayProduct {
 
 export function RecommendationsSection({ product }: { product: IProduct }) {
   const [loading, setLoading] = useState(false);
-  const [products, setProducts] = useState<DisplayProduct[]>([]);
+  const [displayProducts, setDisplayProducts] = useState<DisplayProduct[]>([]);
 
   const getRecommendations = async () => {
     try {
@@ -92,7 +92,7 @@ export function RecommendationsSection({ product }: { product: IProduct }) {
         }
       }
 
-      setProducts(displayProducts);
+      setDisplayProducts(displayProducts);
     } catch (err) {
       console.error('Error:', err);
       alert('Failed to get recommendations');
@@ -113,118 +113,96 @@ export function RecommendationsSection({ product }: { product: IProduct }) {
   };
 
   return (
-    <div className="bg-gray-50 py-8 w-full">
-      <div className="w-full">
-        <div className="flex items-center gap-4 mb-6 px-6">
-          <h2 className="text-xl font-semibold text-gray-900">Similar Products</h2>
-          <Button 
-            onClick={getRecommendations}
-            disabled={loading}
-            variant="outline"
-            size="sm"
-            className="bg-white hover:bg-gray-50"
-          >
-            {loading ? 'Getting Recommendations...' : 'Find Similar Products'}
-          </Button>
-        </div>
+    <div className="flex flex-col items-center justify-center w-full max-w-7xl mx-auto px-4 py-8">
+      <div className="flex flex-col items-center gap-4 mb-8">
+        <h2 className="text-2xl font-bold text-center">Similar Products</h2>
+        <Button 
+          onClick={getRecommendations}
+          disabled={loading}
+          variant="outline"
+          size="sm"
+          className="bg-white hover:bg-gray-50"
+        >
+          {loading ? 'Getting Recommendations...' : 'Find Similar Products'}
+        </Button>
+      </div>
 
-        {products.length > 0 && (
-          <div className="relative w-full">
-            <div className="overflow-x-auto pb-4 hide-scrollbar w-full">
-              <div className="flex gap-4 px-6 w-full" style={{ minWidth: 'min-content' }}>
-                {products.map((product, index) => (
-                  <div 
-                    key={index}
-                    className="flex-none"
-                    style={{ width: '300px' }}
-                  >
-                    <div className="bg-white border rounded-lg p-4 h-full">
-                      <div className="aspect-square w-full mb-4 bg-gray-50 rounded-md overflow-hidden">
-                        {product.image ? (
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              // Try the small version if the regular version fails
-                              if (target.src.includes('/front.jpg')) {
-                                target.src = target.src.replace('/front.jpg', '/front_small.jpg');
-                              } else if (target.src.includes('/front_small.jpg')) {
-                                // If small version fails, hide image and show "No Image" text
-                                const parent = target.parentElement;
-                                if (parent) {
-                                  target.style.display = 'none';
-                                  const noImageDiv = document.createElement('div');
-                                  noImageDiv.className = 'w-full h-full flex flex-col items-center justify-center text-gray-400';
-                                  noImageDiv.innerHTML = `
-                                    <div class="h-16 w-16 mb-2">
-                                      ${foodIcon}
-                                    </div>
-                                    <span class="text-sm mt-2">No Image Available</span>
-                                    <span class="text-xs mt-1 text-gray-500">${product.name}</span>
-                                  `;
-                                  parent.appendChild(noImageDiv);
-                                }
-                              } else {
-                                const barcode = target.src.split('/products/')[1]?.split('/front')[0];
-                                if (barcode) {
-                                  target.src = `https://images.openfoodfacts.org/images/products/${barcode}/front.jpg`;
-                                } else {
-                                  // If all attempts fail, show "No Image" with nice styling
-                                  const parent = target.parentElement;
-                                  if (parent) {
-                                    target.style.display = 'none';
-                                    const noImageDiv = document.createElement('div');
-                                    noImageDiv.className = 'w-full h-full flex flex-col items-center justify-center text-gray-400';
-                                    noImageDiv.innerHTML = `
-                                      <div class="h-16 w-16 mb-2">
-                                        ${foodIcon}
-                                      </div>
-                                      <span class="text-sm mt-2">No Image Available</span>
-                                      <span class="text-xs mt-1 text-gray-500">${product.name}</span>
-                                    `;
-                                    parent.appendChild(noImageDiv);
-                                  }
-                                }
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                            <div className="h-16 w-16 mb-2" dangerouslySetInnerHTML={{ __html: foodIcon }} />
-                            <span className="text-sm mt-2">No Image Available</span>
-                            <span className="text-xs mt-1 text-gray-500">{product.name}</span>
+      <div className="flex gap-4 overflow-x-auto pb-4 w-full justify-center">
+        {displayProducts.map((product, index) => (
+          <div key={index} className="flex-none w-[200px] bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="relative w-full pt-[100%]">
+              {product.image ? (
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="absolute top-0 left-0 w-full h-full object-contain"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    // Try the small version if the regular version fails
+                    if (target.src.includes('/front.jpg')) {
+                      target.src = target.src.replace('/front.jpg', '/front_small.jpg');
+                    } else if (target.src.includes('/front_small.jpg')) {
+                      // If small version fails, hide image and show "No Image" text
+                      const parent = target.parentElement;
+                      if (parent) {
+                        target.style.display = 'none';
+                        const noImageDiv = document.createElement('div');
+                        noImageDiv.className = 'w-full h-full flex flex-col items-center justify-center text-gray-400';
+                        noImageDiv.innerHTML = `
+                          <div class="h-16 w-16 mb-2">
+                            ${foodIcon}
                           </div>
-                        )}
-                      </div>
-                      <h3 className="font-medium text-gray-900 line-clamp-2 min-h-[2.5rem]">
-                        {product.name}
-                      </h3>
-                      <div className="mt-2">
-                        <span className="text-gray-600 text-sm">Nutri-Score: </span>
-                        <span className={`font-medium text-sm ${getNutriScoreColor(product.grade)}`}>
-                          {product.grade.toUpperCase()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                          <span class="text-sm mt-2">No Image Available</span>
+                          <span class="text-xs mt-1 text-gray-500">${product.name}</span>
+                        `;
+                        parent.appendChild(noImageDiv);
+                      }
+                    } else {
+                      const barcode = target.src.split('/products/')[1]?.split('/front')[0];
+                      if (barcode) {
+                        target.src = `https://images.openfoodfacts.org/images/products/${barcode}/front.jpg`;
+                      } else {
+                        // If all attempts fail, show "No Image" with nice styling
+                        const parent = target.parentElement;
+                        if (parent) {
+                          target.style.display = 'none';
+                          const noImageDiv = document.createElement('div');
+                          noImageDiv.className = 'w-full h-full flex flex-col items-center justify-center text-gray-400';
+                          noImageDiv.innerHTML = `
+                            <div class="h-16 w-16 mb-2">
+                              ${foodIcon}
+                            </div>
+                            <span class="text-sm mt-2">No Image Available</span>
+                            <span class="text-xs mt-1 text-gray-500">${product.name}</span>
+                          `;
+                          parent.appendChild(noImageDiv);
+                        }
+                      }
+                    }
+                  }}
+                />
+              ) : (
+                <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-gray-400">
+                  <div className="h-16 w-16 mb-2" dangerouslySetInnerHTML={{ __html: foodIcon }} />
+                  <span className="text-sm mt-2">No Image Available</span>
+                  <span className="text-xs mt-1 text-gray-500">{product.name}</span>
+                </div>
+              )}
+            </div>
+            <div className="p-4">
+              <h3 className="font-medium text-gray-900 line-clamp-2 min-h-[2.5rem] mb-2">
+                {product.name}
+              </h3>
+              <div className="flex items-center gap-1">
+                <span className="text-gray-600 text-sm">Nutri-Score: </span>
+                <span className={`font-medium text-sm ${getNutriScoreColor(product.grade)}`}>
+                  {product.grade.toUpperCase()}
+                </span>
               </div>
             </div>
           </div>
-        )}
+        ))}
       </div>
-
-      <style jsx global>{`
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
     </div>
   );
 }
