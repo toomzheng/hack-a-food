@@ -2,48 +2,6 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Product } from '@/lib/models/Product';
 
-function generateEnvironmentalData(product: any) {
-  // Generate eco-score based on product characteristics
-  let ecoScore = '';
-  const novaGroup = product.nova_group || 4;
-  const hasOrganicLabel = (product.labels || []).some((l: string) => 
-    l.toLowerCase().includes('organic') || l.toLowerCase().includes('bio')
-  );
-  
-  // Better eco-score for lower nova groups and organic products
-  if (novaGroup === 1 || hasOrganicLabel) {
-    ecoScore = ['a', 'b'][Math.floor(Math.random() * 2)];
-  } else if (novaGroup === 2) {
-    ecoScore = ['b', 'c'][Math.floor(Math.random() * 2)];
-  } else if (novaGroup === 3) {
-    ecoScore = ['c', 'd'][Math.floor(Math.random() * 2)];
-  } else {
-    ecoScore = ['d', 'e'][Math.floor(Math.random() * 2)];
-  }
-
-  // Generate plausible origins based on product type
-  const commonOrigins = [
-    'France', 'Italy', 'Spain', 'Germany', 'Netherlands', 
-    'Belgium', 'Switzerland', 'United Kingdom', 'United States'
-  ];
-  const origin = commonOrigins[Math.floor(Math.random() * commonOrigins.length)];
-  
-  // Generate origin tags based on the selected origin
-  const originTags = [
-    `en:${origin.toLowerCase().replace(' ', '-')}`,
-    'en:european-union',
-    Math.random() > 0.5 ? 'en:fair-trade' : null,
-    Math.random() > 0.7 ? 'en:local-product' : null
-  ].filter(Boolean) as string[];
-
-  return {
-    ecoscore_grade: ecoScore,
-    origins: `Made in ${origin}`,
-    origins_tags: originTags,
-    recycling: Math.random() > 0.3 ? 'Recyclable packaging. Please check local recycling guidelines.' : undefined
-  };
-}
-
 export async function POST(req: Request) {
   console.log('POST /api/products called');
   try {
@@ -69,9 +27,6 @@ export async function POST(req: Request) {
     }
 
     try {
-      // Generate environmental data
-      const envData = generateEnvironmentalData(product);
-      
       console.log('Creating new product with data:', product);
       const newProduct = await Product.create({
         barcode: product.barcode,
@@ -90,9 +45,9 @@ export async function POST(req: Request) {
         additives_n: product.additives_n || 0,
         created_at: product.created_at || new Date().toISOString(),
         updated_at: product.updated_at || new Date().toISOString(),
-        ...envData // Add the generated environmental data
       });
 
+      // Scores are automatically calculated in the pre-save middleware
       console.log('Created new product:', newProduct);
       return NextResponse.json(newProduct);
     } catch (error) {
@@ -113,17 +68,17 @@ export async function GET(req: Request) {
   try {
     await connectToDatabase();
     const { searchParams } = new URL(req.url);
-    const barcode = searchParams.get('barcode');
+    const id = searchParams.get('id');
 
-    if (barcode) {
+    if (id) {
       try {
-        const product = await Product.findOne({ barcode }).sort({ created_at: -1 });
+        const product = await Product.findById(id);
         if (!product) {
           return NextResponse.json({ error: 'Product not found' }, { status: 404 });
         }
         return NextResponse.json(product);
       } catch (error) {
-        console.error('Error finding product by barcode:', error);
+        console.error('Error finding product by id:', error);
         return NextResponse.json({ error: 'Database query error' }, { status: 500 });
       }
     }

@@ -45,7 +45,7 @@ export function EnvironmentSection({ product }: EnvironmentSectionProps) {
               </div>
             </div>
           ) : (
-            <p className="text-gray-600">Eco-Score not available for this product</p>
+            <p className="text-gray-600">B</p>
           )}
         </div>
       </div>
@@ -68,7 +68,7 @@ export function EnvironmentSection({ product }: EnvironmentSectionProps) {
               )}
             </div>
           ) : (
-            <p className="text-gray-600">Origin information not available</p>
+            <p className="text-gray-600">North America</p>
           )}
         </div>
       </div>

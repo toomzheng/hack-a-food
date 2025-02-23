@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { DashboardSection } from "@/app/components/dashboard-section"
 import { EnvironmentSection } from "@/app/components/environment-section"
 import { HealthSection } from "@/app/components/health-section"
@@ -12,19 +13,35 @@ import { IProduct } from "@/lib/models/Product"
 import { PastScans } from "@/app/components/past-scans"
 
 export default function DashboardPage() {
+  const searchParams = useSearchParams();
   const [product, setProduct] = useState<IProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchLatestProduct = async () => {
+  const fetchProduct = async (productId?: string) => {
     try {
-      const response = await fetch('/api/products');
+      let url = '/api/products';
+      if (productId) {
+        url += `?id=${productId}`;
+      }
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch product');
       }
-      const products = await response.json();
-      if (products.length > 0) {
-        setProduct(products[0]); // Get the most recent product
+      const data = await response.json();
+      
+      if (productId) {
+        // If we're fetching a specific product
+        setProduct(data);
+      } else {
+        // If no specific product, get the most recent one
+        const products = Array.isArray(data) ? data : [data];
+        const sortedProducts = products.sort((a: IProduct, b: IProduct) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        if (sortedProducts.length > 0) {
+          setProduct(sortedProducts[0]);
+        }
       }
     } catch (err) {
       console.error('Error fetching product:', err);
@@ -41,8 +58,9 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    fetchLatestProduct();
-  }, []);
+    const productId = searchParams.get('id');
+    fetchProduct(productId || undefined);
+  }, [searchParams]);
 
   if (loading) {
     return (

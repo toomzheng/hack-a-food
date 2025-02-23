@@ -1,10 +1,21 @@
 import { IProduct } from '@/lib/models/Product';
+import { useState } from 'react';
+import { InfoIcon } from 'lucide-react';
+import { InfoCard } from '@/components/ui/info-card';
 
 interface HealthSectionProps {
   product: IProduct;
 }
 
+interface NutrientInfo {
+  type: string;
+  value: number;
+  unit: string;
+}
+
 export function HealthSection({ product }: HealthSectionProps) {
+  const [selectedNutrient, setSelectedNutrient] = useState<NutrientInfo | null>(null);
+
   const getNutriScoreColor = (grade: string, isActive: boolean) => {
     const colors = {
       a: isActive ? 'bg-[#038141]' : 'bg-[#038141]/30',
@@ -26,6 +37,33 @@ export function HealthSection({ product }: HealthSectionProps) {
     };
     return qualityMap[grade.toLowerCase()] || 'Nutritional quality not available';
   };
+
+  const handleInfoClick = (type: string, value: number, unit: string) => {
+    setSelectedNutrient({ type, value, unit });
+  };
+
+  const NutrientBox = ({ 
+    title, 
+    value, 
+    unit 
+  }: { 
+    title: string; 
+    value: number; 
+    unit: string; 
+  }) => (
+    <div className="bg-gray-50 p-2 rounded relative group">
+      <div className="flex justify-between items-start">
+        <p className="text-sm font-medium">{title}</p>
+        <button
+          onClick={() => handleInfoClick(title, value, unit)}
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <InfoIcon className="w-4 h-4 text-blue-500 hover:text-blue-600" />
+        </button>
+      </div>
+      <p className="text-lg">{value.toFixed(2)}{unit}</p>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -68,40 +106,60 @@ export function HealthSection({ product }: HealthSectionProps) {
       <div>
         <h3 className="font-semibold mb-2">Nutritional Information (per 100g)</h3>
         <div className="grid grid-cols-2 gap-2">
-          <div className="bg-gray-50 p-2 rounded">
-            <p className="text-sm font-medium">Energy</p>
-            <p className="text-lg">{product.nutriments.energy_100g?.toFixed(2)} kJ</p>
-          </div>
-          <div className="bg-gray-50 p-2 rounded">
-            <p className="text-sm font-medium">Proteins</p>
-            <p className="text-lg">{product.nutriments.proteins_100g?.toFixed(2)}g</p>
-          </div>
-          <div className="bg-gray-50 p-2 rounded">
-            <p className="text-sm font-medium">Carbohydrates</p>
-            <p className="text-lg">{product.nutriments.carbohydrates_100g?.toFixed(2)}g</p>
-          </div>
-          <div className="bg-gray-50 p-2 rounded">
-            <p className="text-sm font-medium">Sugars</p>
-            <p className="text-lg">{product.nutriments.sugars_100g?.toFixed(2)}g</p>
-          </div>
-          <div className="bg-gray-50 p-2 rounded">
-            <p className="text-sm font-medium">Fat</p>
-            <p className="text-lg">{product.nutriments.fat_100g?.toFixed(2)}g</p>
-          </div>
-          <div className="bg-gray-50 p-2 rounded">
-            <p className="text-sm font-medium">Saturated Fat</p>
-            <p className="text-lg">{product.nutriments['saturated-fat_100g']?.toFixed(2)}g</p>
-          </div>
-          <div className="bg-gray-50 p-2 rounded">
-            <p className="text-sm font-medium">Fiber</p>
-            <p className="text-lg">{product.nutriments.fiber_100g?.toFixed(2)}g</p>
-          </div>
-          <div className="bg-gray-50 p-2 rounded">
-            <p className="text-sm font-medium">Salt</p>
-            <p className="text-lg">{product.nutriments.salt_100g?.toFixed(2)}g</p>
-          </div>
+          <NutrientBox 
+            title="Energy" 
+            value={product.nutriments.energy_100g} 
+            unit="kJ" 
+          />
+          <NutrientBox 
+            title="Proteins" 
+            value={product.nutriments.proteins_100g} 
+            unit="g" 
+          />
+          <NutrientBox 
+            title="Carbohydrates" 
+            value={product.nutriments.carbohydrates_100g} 
+            unit="g" 
+          />
+          <NutrientBox 
+            title="Sugars" 
+            value={product.nutriments.sugars_100g} 
+            unit="g" 
+          />
+          <NutrientBox 
+            title="Fat" 
+            value={product.nutriments.fat_100g} 
+            unit="g" 
+          />
+          <NutrientBox 
+            title="Saturated Fat" 
+            value={product.nutriments['saturated-fat_100g']} 
+            unit="g" 
+          />
+          <NutrientBox 
+            title="Fiber" 
+            value={product.nutriments.fiber_100g} 
+            unit="g" 
+          />
+          <NutrientBox 
+            title="Salt" 
+            value={product.nutriments.salt_100g} 
+            unit="g" 
+          />
         </div>
       </div>
+
+      {selectedNutrient && (
+        <InfoCard
+          title={`About ${selectedNutrient.type}`}
+          isOpen={true}
+          onClose={() => setSelectedNutrient(null)}
+          infoType="nutrient"
+          nutrientType={selectedNutrient.type}
+          value={selectedNutrient.value}
+          unit={selectedNutrient.unit}
+        />
+      )}
     </div>
   );
 }

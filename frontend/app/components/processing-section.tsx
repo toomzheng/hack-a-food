@@ -1,13 +1,16 @@
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, InfoIcon } from "lucide-react"
 import { IProduct } from '@/lib/models/Product';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Badge } from "@/components/ui/badge"
+import { InfoCard } from "@/components/ui/info-card"
 
 interface ProcessingSectionProps {
   product: IProduct;
 }
 
 export function ProcessingSection({ product }: ProcessingSectionProps) {
+  const [selectedAdditives, setSelectedAdditives] = useState<Map<string, boolean>>(new Map());
+
   const formattedAdditives = useMemo(() => {
     return product.additives_tags.map(additive => {
       // Remove language prefix (e.g., 'en:')
@@ -28,6 +31,15 @@ export function ProcessingSection({ product }: ProcessingSectionProps) {
     });
   }, [product.additives_tags]);
 
+  const toggleAdditive = (index: number) => {
+    setSelectedAdditives(prev => {
+      const newMap = new Map(prev);
+      const additive = product.additives_tags[index];
+      newMap.set(additive, !prev.get(additive));
+      return newMap;
+    });
+  };
+
   const novaGroupDescriptions = {
     1: 'Unprocessed or minimally processed foods',
     2: 'Processed culinary ingredients',
@@ -46,15 +58,24 @@ export function ProcessingSection({ product }: ProcessingSectionProps) {
 
       {formattedAdditives.length > 0 && (
         <div className="space-y-2">
-          <h3 className="font-medium">Additives ({product.additives_n})</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-medium">Additives ({product.additives_n})</h3>
+            <button
+              onClick={() => toggleAdditive(0)}
+              className="text-blue-500 hover:text-blue-600 transition-colors"
+            >
+              <InfoIcon className="w-4 h-4" />
+            </button>
+          </div>
           <div className="flex flex-wrap gap-2">
             {formattedAdditives.map((additive, index) => (
-              <span
+              <button
                 key={index}
-                className="bg-yellow-50 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium"
+                onClick={() => toggleAdditive(index)}
+                className="bg-yellow-50 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-yellow-100 transition-colors"
               >
                 {additive}
-              </span>
+              </button>
             ))}
           </div>
         </div>
@@ -85,6 +106,20 @@ export function ProcessingSection({ product }: ProcessingSectionProps) {
           ))}
         </div>
       </div>
+
+      {/* Render InfoCard for each selected additive */}
+      {Array.from(selectedAdditives.entries()).map(([additive, isOpen]) => (
+        isOpen && (
+          <InfoCard
+            key={additive}
+            title={`Additive Information: ${additive.split(':').pop()}`}
+            isOpen={true}
+            onClose={() => toggleAdditive(product.additives_tags.indexOf(additive))}
+            infoType="additive"
+            additiveCode={additive}
+          />
+        )
+      ))}
     </div>
   );
 }

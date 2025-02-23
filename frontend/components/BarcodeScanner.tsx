@@ -70,6 +70,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onProductFound, isScann
       try {
         const savedProduct = JSON.parse(responseText);
         console.log('Successfully saved product:', savedProduct);
+        onProductFound(savedProduct);
+        router.push(`/dashboard?id=${savedProduct._id}`);
         return savedProduct;
       } catch (e) {
         console.error('Error parsing success response:', e);
@@ -100,8 +102,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onProductFound, isScann
             const product = await getProductByBarcode(result.getText());
             console.log('Product data fetched:', product);
             const savedProduct = await saveToMongoDB(product);
-            onProductFound(savedProduct);
-            router.push('/dashboard');
           } catch (error) {
             console.error('Error in scan process:', error);
             setError(error instanceof Error ? error.message : 'Failed to process product');
