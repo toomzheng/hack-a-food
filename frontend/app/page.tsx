@@ -1,127 +1,55 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
 import BarcodeScanner from "@/components/BarcodeScanner"
-import ProductInfo from "@/components/ProductInfo"
+import { ProductData } from "@/lib/types"
+import { Particles } from "@/components/ui/particles"
 
-interface OpenFoodFactsProduct {
-  product_name: string;
-  brands: string;
-  image_url: string;
-  nutrition_grades: string;
-  nutriments: {
-    'energy-kcal_100g': number;
-    'fat_100g': number;
-    'saturated-fat_100g': number;
-    'carbohydrates_100g': number;
-    'sugars_100g': number;
-    'fiber_100g': number;
-    'proteins_100g': number;
-    'salt_100g': number;
-  };
-  ingredients_text: string;
-  allergens: string;
-}
-
-export default function Home() {
+export default function HomePage() {
   const [isScanning, setIsScanning] = useState(false)
-  const [productData, setProductData] = useState<any>(null)
-  const [error, setError] = useState<string>("")
-  const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
-  const handleBarcodeDetected = async (barcode: string) => {
-    setIsScanning(false)
-    setLoading(true)
-    setError("")
-
-    try {
-      const response = await fetch(
-        `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
-        {
-          headers: {
-            'User-Agent': 'FoodNutritionScanner - Web - Version 1.0'
-          }
-        }
-      )
-      
-      const data = await response.json()
-      
-      if (data.status !== 1) {
-        throw new Error("Product not found")
-      }
-
-      const product = data.product as OpenFoodFactsProduct
-      
-      setProductData({
-        name: product.product_name || 'N/A',
-        brand: product.brands,
-        image_url: product.image_url,
-        nutrition_grade: (product.nutrition_grades || 'N/A').toUpperCase(),
-        nutrients: {
-          energy_kcal: product.nutriments['energy-kcal_100g'],
-          fat: product.nutriments['fat_100g'],
-          saturated_fat: product.nutriments['saturated-fat_100g'],
-          carbohydrates: product.nutriments['carbohydrates_100g'],
-          sugars: product.nutriments['sugars_100g'],
-          fiber: product.nutriments['fiber_100g'],
-          proteins: product.nutriments['proteins_100g'],
-          salt: product.nutriments['salt_100g']
-        },
-        ingredients: product.ingredients_text,
-        allergens: product.allergens
-      })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch product data")
-    } finally {
-      setLoading(false)
-    }
+  const handleProductFound = (product: ProductData) => {
+    // Product is already saved to MongoDB by the BarcodeScanner component
+    router.push('/dashboard')
   }
 
   return (
-    <main className="min-h-screen p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">Food Product Scanner</h1>
-        
-        <div className="mb-8 text-center">
-          <button
-            onClick={() => setIsScanning(!isScanning)}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-          >
-            {isScanning ? "Stop Scanning" : "Start Scanning"}
-          </button>
-        </div>
-
-        <div className="mb-8">
-          <BarcodeScanner
-            isScanning={isScanning}
-            onBarcodeDetected={handleBarcodeDetected}
-          />
-        </div>
-
-        {loading && (
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+    <div className="relative min-h-screen bg-white">
+      <Particles
+        className="absolute inset-0"
+        quantity={100}
+        staticity={50}
+        ease={50}
+        color="#000000"
+      />
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
+        <p className="text-gray-600 text-lg mb-2">Welcome to:</p>
+        <h1 className="text-4xl font-bold mb-4">Hack-A-Food!</h1>
+        <p className="text-gray-600 text-lg mb-8">Scan any packaged food barcode of your choice below!</p>
+        {!isScanning ? (
+          <Button onClick={() => setIsScanning(true)} size="lg">
+            Scan Food
+          </Button>
+        ) : (
+          <div className="w-full max-w-md">
+            <BarcodeScanner 
+              isScanning={isScanning} 
+              onProductFound={handleProductFound} 
+            />
+            <Button 
+              onClick={() => setIsScanning(false)} 
+              variant="outline" 
+              className="mt-4 w-full"
+            >
+              Cancel Scan
+            </Button>
           </div>
-        )}
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-8">
-            {error}
-          </div>
-        )}
-
-        {productData && !loading && (
-          <ProductInfo
-            name={productData.name}
-            brand={productData.brand}
-            image_url={productData.image_url}
-            nutrition_grade={productData.nutrition_grade}
-            nutrients={productData.nutrients}
-            ingredients={productData.ingredients}
-            allergens={productData.allergens}
-          />
         )}
       </div>
-    </main>
+    </div>
   )
 }
+
